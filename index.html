@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TOEIC 練習 MVP</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">TOEIC Listening 練習（MVP）</div>
+    <nav class="topnav">
+      <a href="#home" id="navHome">首頁</a>
+      <a href="#exam" id="navExam" class="disabled" aria-disabled="true">考試</a>
+      <a href="#result" id="navResult" class="disabled" aria-disabled="true">結果</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="viewHome" class="view">
+      <h1>選擇題組</h1>
+      <div class="card">
+        <div class="row">
+          <label for="setSelect" class="label">題組</label>
+          <select id="setSelect">
+            <option value="set1">Listening Set 1（Part 1: Q1–Q6 / Part 2: Q7–Q16）</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="durationMin" class="label">作答時間（分鐘）</label>
+          <input id="durationMin" type="number" min="1" step="1" value="12" />
+          <div class="hint">時間到後仍可繼續作答並交卷，會標記為超時（1B）。</div>
+        </div>
+        <div class="row">
+          <button id="btnStart" class="primary">開始練習</button>
+          <button id="btnReset" class="ghost">清除本機作答紀錄</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>說明</h2>
+        <ul>
+          <li>Part 1 顯示圖片（PNG），請聽音檔後選擇 A–D。</li>
+          <li>Part 2 只有音檔（無題目文字），請選擇 A–C。</li>
+          <li>交卷後先顯示分數；解析預設隱藏，需點「發布解析」（2B）。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="viewExam" class="view hidden">
+      <div class="examHeader">
+        <div class="timerBox">
+          <div class="timerLabel">倒數</div>
+          <div id="timer" class="timer">--:--</div>
+          <div id="overtime" class="overtime hidden">超時 +<span id="overtimeVal">0:00</span></div>
+        </div>
+
+        <div class="audioBox">
+          <div class="audioTitle">播放（拼接音檔）</div>
+          <div class="audioControls">
+            <button id="btnPlayP1" class="ghost">播放 Part 1 全部</button>
+            <button id="btnPlayP2" class="ghost">播放 Part 2 全部</button>
+            <button id="btnPause" class="ghost">暫停</button>
+          </div>
+          <audio id="audio" controls preload="metadata"></audio>
+          <div class="hint small">提示：也可在每題點「播放本題音檔」。</div>
+        </div>
+
+        <div class="actionsBox">
+          <button id="btnSubmit" class="danger">交卷</button>
+          <div id="saveHint" class="hint small">作答會暫存於本機（localStorage）。</div>
+        </div>
+      </div>
+
+      <div class="examBody">
+        <aside class="navPanel">
+          <div class="navTitle">題號</div>
+          <div id="qGrid" class="qGrid"></div>
+          <div class="navBottom">
+            <button id="btnPrev" class="ghost">上一題</button>
+            <button id="btnNext" class="ghost">下一題</button>
+          </div>
+        </aside>
+
+        <section class="questionPanel">
+          <div class="qMeta">
+            <div id="qTitle" class="qTitle">Q--</div>
+            <div id="qPart" class="qPart">Part --</div>
+          </div>
+
+          <div id="qMedia" class="qMedia"></div>
+
+          <div class="qTools">
+            <button id="btnPlayQ" class="ghost">播放本題音檔</button>
+            <span id="qAudioHint" class="hint small"></span>
+          </div>
+
+          <div id="choices" class="choices"></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="viewResult" class="view hidden">
+      <h1>結果</h1>
+      <div class="card">
+        <div class="resultTop">
+          <div>
+            <div class="resultScore"><span id="score">--</span> / <span id="total">--</span></div>
+            <div id="resultMeta" class="hint">—</div>
+          </div>
+          <div class="resultActions">
+            <button id="btnPublish" class="primary">發布解析</button>
+            <button id="btnRetry" class="ghost">回到首頁</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>題目明細</h2>
+        <div id="resultList" class="resultList"></div>
+      </div>
+
+      <div id="explainCard" class="card hidden">
+        <h2>解析</h2>
+        <div id="explainList" class="explainList"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="hint small">Static MVP. 無後端；素材位於 assets/。</div>
+  </footer>
+
+  <script src="./app.js"></script>
+</body>
+</html>
