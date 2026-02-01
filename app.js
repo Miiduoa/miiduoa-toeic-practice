@@ -11,19 +11,19 @@ const SETS = {
       part2: './assets/set1/Part2_all.mp3',
     },
     questions: [
-      // Part 1 (A-D) with image
-      { id: 1, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q1.svg.png', audio: './assets/set1/audio/P1_Q1.mp3',
-        explain: '關鍵判斷：圖片是「辦公桌 + 人在整理文件」場景。\n陷阱：B 文件放抽屜（圖片沒有抽屜動作線索）；C 修理印表機（圖片沒有維修姿勢/工具）；D 椅子排成一列（圖片主體不是椅子）。' },
-      { id: 2, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q2.svg.png', audio: './assets/set1/audio/P1_Q2.mp3',
-        explain: '關鍵判斷：桌面/餐廳場景，重點是「擺放餐具/準備用餐」。\n陷阱：B 付款（沒有收銀台行為）；C 盤子被收走（跟「準備」相反）；D 椅子疊起（收店情境）。' },
+      // Part 1 (A-D) with image (synced to real photos + new audio)
+      { id: 1, part: 1, choices: ['A','B','C','D'], correct: 'B', image: './assets/set1/images_png/P1_Q1.svg.png', audio: './assets/set1/audio/P1_Q1.mp3',
+        explain: '正解 B：照片顯示在辦公桌上處理/整理文件（多雙手在文件上操作）。\n陷阱：A 調整椅子高度（畫面主體不是椅子調整）；C 清潔螢幕（沒有擦拭動作）；D 會議進行（不是會議室情境）。' },
+      { id: 2, part: 1, choices: ['A','B','C','D'], correct: 'C', image: './assets/set1/images_png/P1_Q2.svg.png', audio: './assets/set1/audio/P1_Q2.mp3',
+        explain: '正解 C：照片可見服務生在餐廳內整理/擺放桌面（set tables）。\n陷阱：A 付款（沒有收銀/付款動作）；B 疊椅子（非收店情境）；D 盤子已收走（與擺設相反）。' },
       { id: 3, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q3.svg.png', audio: './assets/set1/audio/P1_Q3.mp3',
-        explain: '關鍵判斷：建物/工地 + 人在檢查。\n陷阱：B 洗窗（沒有清潔工具）；C 打蠟（地板情境不符）；D 鎖門（無鎖門線索）。' },
+        explain: '正解 A：照片中工地工作者戴安全帽/護具，屬施工現場情境。\n陷阱：B 洗窗、C 鋪地毯、D 卸貨卡車都不符合畫面。' },
       { id: 4, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q4.svg.png', audio: './assets/set1/audio/P1_Q4.mp3',
-        explain: '關鍵判斷：航廈/候機區（terminal），多人等待。\n陷阱：B 飛機降落（圖片沒有跑道/飛機）；C 行李裝載（沒有行李車）；D 火車月台（場景不是車站）。' },
-      { id: 5, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q5.svg.png', audio: './assets/set1/audio/P1_Q5.mp3',
-        explain: '關鍵判斷：倉庫/貨架/箱子堆疊。\n陷阱：B 梯子（圖片沒梯子）；C 正在配送（沒有卡車/運送動作）；D 撕標籤（沒有手部動作線索）。' },
+        explain: '正解 A：照片是機場航廈登機門附近，旅客在候機。\n陷阱：B 起飛外景、C 裝載行李車、D 火車月台都不符合照片。' },
+      { id: 5, part: 1, choices: ['A','B','C','D'], correct: 'B', image: './assets/set1/images_png/P1_Q5.svg.png', audio: './assets/set1/audio/P1_Q5.mp3',
+        explain: '正解 B：照片顯示倉儲空間，箱子堆放在貨架/地面。\n陷阱：A 拿梯子、C 撕標籤、D 打蠟地板皆無對應線索。' },
       { id: 6, part: 1, choices: ['A','B','C','D'], correct: 'A', image: './assets/set1/images_png/P1_Q6.svg.png', audio: './assets/set1/audio/P1_Q6.mp3',
-        explain: '關鍵判斷：會議桌 + 多人坐著。\n陷阱：B 投影機（圖片未出現）；C 文件歸檔（動作不在歸檔）；D 椅子搬到戶外（不符）。' },
+        explain: '正解 A：照片是會議室/研討空間，前方有投影/展示設備（presentation setting）。\n陷阱：B 椅子搬到戶外、C 桌子正在運送、D 牆面重新粉刷都不符合。' },
 
       // Part 2 (A-C), audio only
       { id: 7, part: 2, choices: ['A','B','C'], correct: 'A', audio: './assets/set1/audio/P2_Q7.mp3',
