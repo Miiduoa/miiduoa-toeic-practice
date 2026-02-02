@@ -47,10 +47,434 @@ const SETS = {
       { id: 16, part: 2, choices: ['A','B','C'], correct: 'A', audio: './assets/set1/audio/P2_Q16.mp3',
         explain: 'How did you get to...? → 回交通方式（took the train / drove / walked）。' },
     ]
+  },
+  full_listening: {
+    id: 'full_listening',
+    title: 'Full Listening 100（Part 1–4）',
+    durationSecDefault: 45 * 60,
+    assetsBase: null,
+    concatAudio: null,
+    questions: null, // generated on first use
   }
 };
 
 const LS_KEY = 'toeic_mvp_state_v1';
+
+// --- Utilities: deterministic RNG (for generated sets) ---
+function makeRng(seed){
+  let a = seed >>> 0;
+  return function(){
+    // mulberry32
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randInt(rng, n){
+  return Math.floor(rng() * n);
+}
+function pick(rng, arr){
+  return arr[randInt(rng, arr.length)];
+}
+function shuffle(rng, arr){
+  const a = [...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j = randInt(rng, i+1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// --- Web Speech (for generated audio; no copyrighted TOEIC audio used) ---
+function stopSpeech(){
+  try{ window.speechSynthesis?.cancel?.(); }catch{}
+}
+function speakEn(text, opts={}){
+  if(typeof window === 'undefined') return;
+  if(!('speechSynthesis' in window)){
+    alert('此瀏覽器不支援語音合成（speechSynthesis）。');
+    return;
+  }
+  stopSpeech();
+  const u = new SpeechSynthesisUtterance(String(text || ''));
+  u.lang = opts.lang || 'en-US';
+  u.rate = typeof opts.rate === 'number' ? opts.rate : 1;
+  u.pitch = typeof opts.pitch === 'number' ? opts.pitch : 1;
+  u.volume = typeof opts.volume === 'number' ? opts.volume : 1;
+  window.speechSynthesis.speak(u);
+}
+
+function buildSpeechForQuestion(q){
+  if(!q) return null;
+
+  // Part 1: photograph statements
+  if(q.part === 1 && q.statements && Array.isArray(q.statements)){
+    const st = q.statements;
+    const letters = ['A','B','C','D'];
+    return (
+      `Look at the picture marked number ${q.id}. ` +
+      letters.map((L, i) => `${L}. ${st[i] || ''}`).join(' ') +
+      ` `
+    ).trim();
+  }
+
+  // Part 2: question-response
+  if(q.part === 2 && q.prompt && q.responses && Array.isArray(q.responses)){
+    const rs = q.responses;
+    const letters = ['A','B','C'];
+    return (
+      `${q.prompt} ` +
+      letters.map((L, i) => `${L}. ${rs[i] || ''}`).join(' ') +
+      ` `
+    ).trim();
+  }
+
+  // Part 3/4: passage + question + options
+  if((q.part === 3 || q.part === 4) && q.passage && q.questionText && q.optionsText){
+    const letters = ['A','B','C','D'];
+    const opts = q.optionsText;
+    return (
+      `${q.passage} ` +
+      `Question. ${q.questionText} ` +
+      letters.map((L, i) => `${L}. ${opts[i] || ''}`).join(' ') +
+      ` `
+    ).trim();
+  }
+
+  return null;
+}
+
+// --- Generated "1:1" Listening set (original questions, aligned with TOEIC official format/counts) ---
+function generateFullListeningQuestions(){
+  const rng = makeRng(20260202);
+  let id = 1;
+  const out = [];
+
+  // Part 1 (6 questions): reuse available images, generate original statements
+  const part1 = [
+    {
+      image: './assets/set1/images_png/P1_Q1.svg.png',
+      correct: 'B',
+      statements: [
+        'A man is adjusting a chair.',
+        'Several people are reviewing documents on a desk.',
+        'A woman is wiping a computer monitor.',
+        'A meeting is taking place in a conference room.'
+      ],
+      explain: 'Part 1：正解 B（多個人正在桌上檢視文件）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q2.svg.png',
+      correct: 'C',
+      statements: [
+        'A customer is paying at the counter.',
+        'Some chairs are being stacked.',
+        'A server is setting a table in a restaurant.',
+        'Plates have been cleared from the table.'
+      ],
+      explain: 'Part 1：正解 C（服務人員正在擺設餐桌）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q3.svg.png',
+      correct: 'A',
+      statements: [
+        'Construction workers are wearing safety helmets.',
+        'A window is being cleaned.',
+        'A carpet is being laid on the floor.',
+        'A truck is being unloaded.'
+      ],
+      explain: 'Part 1：正解 A（工地人員配戴安全帽）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q4.svg.png',
+      correct: 'A',
+      statements: [
+        'Passengers are waiting near a boarding gate.',
+        'An airplane is taking off.',
+        'Luggage is being loaded onto a cart.',
+        'People are standing on a train platform.'
+      ],
+      explain: 'Part 1：正解 A（旅客在登機門附近候機）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q5.svg.png',
+      correct: 'B',
+      statements: [
+        'A worker is carrying a ladder.',
+        'Boxes are stacked in a storage area.',
+        'Someone is removing labels from packages.',
+        'A floor is being polished.'
+      ],
+      explain: 'Part 1：正解 B（倉儲區箱子堆放）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q6.svg.png',
+      correct: 'A',
+      statements: [
+        'A presentation is being set up in a meeting room.',
+        'Chairs are being moved outdoors.',
+        'A table is being transported through a hallway.',
+        'A wall is being painted.'
+      ],
+      explain: 'Part 1：正解 A（會議/簡報情境）。'
+    }
+  ];
+  for(const q of part1){
+    out.push({
+      id: id++,
+      part: 1,
+      choices: ['A','B','C','D'],
+      correct: q.correct,
+      image: q.image,
+      statements: q.statements,
+      explain: q.explain
+    });
+  }
+
+  // Part 2 (25 questions): question-response (A-C)
+  const p2Pool = [
+    {
+      prompt: 'Where is the conference room?',
+      responses: ['On the third floor.', 'At three o\'clock.', 'Yes, it is.'],
+      correct: 'A',
+      explain: 'Part 2：Where 題型 → 回地點（A）。'
+    },
+    {
+      prompt: 'Why did you call the supplier?',
+      responses: ['To confirm the delivery date.', 'In the warehouse.', 'Two boxes.'],
+      correct: 'A',
+      explain: 'Part 2：Why 題型 → 回原因/目的（A）。'
+    },
+    {
+      prompt: 'Could you email me the schedule?',
+      responses: ['Sure, I\'ll send it right away.', 'No, I\'m at the office.', 'It\'s a blue folder.'],
+      correct: 'A',
+      explain: 'Part 2：Could you...? → 合理回應接受/執行（A）。'
+    },
+    {
+      prompt: 'When will the new software be installed?',
+      responses: ['Next Monday morning.', 'By the IT department.', 'In the lobby.'],
+      correct: 'A',
+      explain: 'Part 2：When 題型 → 回時間（A）。'
+    },
+    {
+      prompt: 'Whose laptop is this?',
+      responses: ['It belongs to Ms. Chen.', 'On the desk.', 'Yes, I have.'],
+      correct: 'A',
+      explain: 'Part 2：Whose 題型 → 回所有人（A）。'
+    },
+    {
+      prompt: 'Would you like some help with those files?',
+      responses: ['Yes, please. Thank you.', 'On the second shelf.', 'At the end of the month.'],
+      correct: 'A',
+      explain: 'Part 2：Would you like...? → 接受/婉拒（A）。'
+    },
+    {
+      prompt: 'How did you get to the client\'s office?',
+      responses: ['I took the subway.', 'At noon.', 'On the left side.'],
+      correct: 'A',
+      explain: 'Part 2：How did you get...? → 回交通方式（A）。'
+    },
+    {
+      prompt: 'Which report should I print first?',
+      responses: ['The sales summary.', 'In the printer room.', 'Yes, it was.'],
+      correct: 'A',
+      explain: 'Part 2：Which...? → 回選擇項（A）。'
+    }
+  ];
+  const p2 = [];
+  for(let i=0;i<25;i++){
+    const base = pick(rng, p2Pool);
+    // rotate correct position sometimes
+    const letters = ['A','B','C'];
+    const order = shuffle(rng, [0,1,2]);
+    const responses = order.map((idx) => base.responses[idx]);
+    const correctIndex = order.indexOf(0);
+    p2.push({
+      id: id++,
+      part: 2,
+      choices: letters,
+      correct: letters[correctIndex],
+      prompt: base.prompt,
+      responses,
+      explain: base.explain
+    });
+  }
+  out.push(...p2);
+
+  // Part 3 (39 questions = 13 conversations x 3)
+  const names = ['Alex', 'Brian', 'Carla', 'Diana', 'Ethan', 'Fiona', 'Grace', 'Henry'];
+  const depts = ['marketing', 'finance', 'human resources', 'customer support', 'IT', 'sales'];
+  const topics = ['a shipment', 'a meeting', 'a hotel reservation', 'a budget request', 'a presentation', 'a maintenance issue'];
+
+  const mkOptions = (correctText, wrongs) => {
+    const all = [correctText, ...wrongs].slice(0,4);
+    const shuffled = shuffle(rng, all);
+    const correctIdx = shuffled.indexOf(correctText);
+    return { optionsText: shuffled, correctIdx };
+  };
+
+  for(let g=1; g<=13; g++){
+    const n1 = pick(rng, names);
+    const n2 = pick(rng, names.filter((x) => x !== n1));
+    const dept = pick(rng, depts);
+    const topic = pick(rng, topics);
+
+    const passage = `Conversation. ${n1}: Hi ${n2}, do you have a minute? ${n2}: Sure. What\'s up? ${n1}: I\'m calling about ${topic} for the ${dept} team. ${n2}: Okay, what do you need?`;
+
+    // Q1: main purpose
+    {
+      const questionText = 'What are the speakers discussing?';
+      const correct = `A ${topic} for the ${dept} team.`;
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'A job interview schedule.',
+        'A restaurant reservation.',
+        'A new office location.'
+      ]);
+      out.push({
+        id: id++,
+        part: 3,
+        groupId: `P3G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 3：主旨題，注意對話一開始提到的重點。'
+      });
+    }
+
+    // Q2: next action
+    {
+      const questionText = `What will ${n2} most likely do next?`;
+      const correct = 'Check the schedule and reply by email.';
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'Cancel the meeting room booking.',
+        'Print the monthly report.',
+        'Call a taxi for the client.'
+      ]);
+      out.push({
+        id: id++,
+        part: 3,
+        groupId: `P3G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 3：下一步題，通常從「I\'ll... / Let me...」推論。'
+      });
+    }
+
+    // Q3: detail
+    {
+      const questionText = 'Why is the man calling?';
+      const correct = 'To request an update on a task.';
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'To complain about a service.',
+        'To offer a discount.',
+        'To reschedule a flight.'
+      ]);
+      out.push({
+        id: id++,
+        part: 3,
+        groupId: `P3G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 3：目的題，注意動詞（call about / need / request）。'
+      });
+    }
+  }
+
+  // Part 4 (30 questions = 10 talks x 3)
+  const places = ['a train station', 'a hotel lobby', 'an airport', 'a supermarket', 'a museum', 'a company cafeteria'];
+
+  for(let g=1; g<=10; g++){
+    const place = pick(rng, places);
+    const passage = `Talk. Hello everyone. This is an announcement at ${place}. Please listen carefully to the following information.`;
+
+    // Q1
+    {
+      const questionText = 'Where does the announcement most likely take place?';
+      const correct = place;
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'a library',
+        'a theater',
+        'a hospital'
+      ]);
+      out.push({
+        id: id++,
+        part: 4,
+        groupId: `P4G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 4：地點題，抓關鍵名詞（場景/設施）。'
+      });
+    }
+
+    // Q2
+    {
+      const questionText = 'What are listeners asked to do?';
+      const correct = 'Follow the updated instructions.';
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'Return a purchase receipt.',
+        'Fill out a job application.',
+        'Pick up a package at the front desk.'
+      ]);
+      out.push({
+        id: id++,
+        part: 4,
+        groupId: `P4G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 4：要求題，常見指令語氣（please / must / should）。'
+      });
+    }
+
+    // Q3
+    {
+      const questionText = 'What will happen next?';
+      const correct = 'Additional information will be provided later.';
+      const { optionsText, correctIdx } = mkOptions(correct, [
+        'A meeting will be canceled immediately.',
+        'A prize will be given to customers.',
+        'A bus will depart in five minutes.'
+      ]);
+      out.push({
+        id: id++,
+        part: 4,
+        groupId: `P4G${g}`,
+        passage,
+        questionText,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: 'Part 4：下一步題，注意「later / soon / next」等時間訊號。'
+      });
+    }
+  }
+
+  // Sanity: should be 100 questions total
+  return out;
+}
+
+function ensureSetQuestions(set){
+  if(!set) return;
+  if(Array.isArray(set.questions) && set.questions.length > 0) return;
+  if(set.id === 'full_listening'){
+    set.questions = generateFullListeningQuestions();
+  }
+}
 
 const el = (id) => document.getElementById(id);
 
@@ -158,7 +582,9 @@ function stopTimerLoop(){
 }
 
 function getSet(){
-  return SETS[state.setId];
+  const set = SETS[state.setId] || SETS.set1;
+  ensureSetQuestions(set);
+  return set;
 }
 
 function getElapsedSec(){
@@ -207,7 +633,8 @@ function renderHome(){
   enableNav(false, false);
 
   el('setSelect').value = state.setId;
-  el('durationMin').value = Math.round(state.durationSec / 60);
+  const set = SETS[state.setId] || SETS.set1;
+  el('durationMin').value = Math.round((set.durationSecDefault || state.durationSec) / 60);
 }
 
 function buildQGrid(){
@@ -249,14 +676,52 @@ function renderExamQuestion(){
   el('qTitle').textContent = `Q${q.id}`;
   el('qPart').textContent = `Part ${q.part}`;
 
-  // media
+  // media / question text
   const media = el('qMedia');
   media.innerHTML = '';
+
   if(q.part === 1 && q.image){
     const img = document.createElement('img');
     img.src = q.image;
     img.alt = `Part 1 圖片 Q${q.id}`;
     media.appendChild(img);
+  } else if(q.part === 3 || q.part === 4){
+    const box = document.createElement('div');
+    box.className = 'hint';
+    box.textContent = q.part === 3
+      ? 'Part 3：Conversation（本題使用語音合成播放，非官方音檔）'
+      : 'Part 4：Talk（本題使用語音合成播放，非官方音檔）';
+    media.appendChild(box);
+
+    if(q.questionText){
+      const qt = document.createElement('div');
+      qt.style.marginTop = '10px';
+      qt.style.fontWeight = '700';
+      qt.textContent = q.questionText;
+      media.appendChild(qt);
+    }
+
+    if(q.passage){
+      const btn = document.createElement('button');
+      btn.className = 'ghost';
+      btn.type = 'button';
+      btn.textContent = '顯示/隱藏逐字稿（訓練用）';
+      btn.style.marginTop = '12px';
+
+      const pre = document.createElement('pre');
+      pre.className = 'hint small';
+      pre.style.whiteSpace = 'pre-wrap';
+      pre.style.marginTop = '10px';
+      pre.style.display = 'none';
+      pre.textContent = q.passage;
+
+      btn.addEventListener('click', () => {
+        pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+      });
+
+      media.appendChild(btn);
+      media.appendChild(pre);
+    }
   } else {
     const box = document.createElement('div');
     box.className = 'hint';
@@ -264,15 +729,20 @@ function renderExamQuestion(){
     media.appendChild(box);
   }
 
-  // per-question audio
-  el('qAudioHint').textContent = q.audio ? `音檔：${q.audio.split('/').slice(-1)[0]}` : '';
+  // per-question audio hint
+  const speech = buildSpeechForQuestion(q);
+  el('qAudioHint').textContent = q.audio
+    ? `音檔：${q.audio.split('/').slice(-1)[0]}`
+    : speech
+      ? '語音合成：可播放（非官方音檔）'
+      : '';
 
   // choices
   const choicesWrap = el('choices');
   choicesWrap.innerHTML = '';
   const current = state.answers[q.id] || '';
 
-  q.choices.forEach((ch) => {
+  q.choices.forEach((ch, idx) => {
     const label = document.createElement('label');
     label.className = 'choice';
 
@@ -292,7 +762,14 @@ function renderExamQuestion(){
     spanL.textContent = ch;
 
     const spanT = document.createElement('span');
-    spanT.textContent = (q.part === 1) ? '（聽敘述，選最符合圖片者）' : '（聽對話/問句，選最佳回應）';
+    const optText = (q.part === 3 || q.part === 4) && Array.isArray(q.optionsText) ? q.optionsText[idx] : null;
+    spanT.textContent = optText
+      ? optText
+      : (q.part === 1)
+        ? '（聽敘述，選最符合圖片者）'
+        : (q.part === 2)
+          ? '（聽問句，選最佳回應）'
+          : '（作答）';
     spanT.style.color = 'var(--muted)';
     spanT.style.fontSize = '13px';
 
@@ -394,12 +871,26 @@ function render(){
 
 function hookEvents(){
   // home
+  el('setSelect').addEventListener('change', () => {
+    const setId = el('setSelect').value;
+    const set = SETS[setId] || SETS.set1;
+    el('durationMin').value = Math.round((set.durationSecDefault || 12 * 60) / 60);
+  });
+
   el('btnStart').addEventListener('click', () => {
     const setId = el('setSelect').value;
     const min = Number(el('durationMin').value);
 
     state.setId = setId;
-    state.durationSec = Math.max(60, Math.floor((isFinite(min) ? min : 12) * 60));
+
+    // Ensure questions exist (for generated sets)
+    const set = SETS[setId] || SETS.set1;
+    ensureSetQuestions(set);
+
+    const defaultMin = Math.round((set.durationSecDefault || 12 * 60) / 60);
+    const chosenMin = (isFinite(min) && min >= 1) ? min : defaultMin;
+
+    state.durationSec = Math.max(60, Math.floor(chosenMin * 60));
     state.startedAtMs = Date.now();
     state.submittedAtMs = null;
     state.currentIndex = 0;
@@ -435,21 +926,52 @@ function hookEvents(){
   const audioEl = el('audio');
 
   el('btnPlayP1').addEventListener('click', async () => {
-    audioEl.src = getSet().concatAudio.part1;
+    const set = getSet();
+    if(!set.concatAudio || !set.concatAudio.part1){
+      alert('此題組沒有 Part 1 拼接音檔。請改用「播放本題音檔」（語音合成/單題音檔）。');
+      return;
+    }
+    stopSpeech();
+    audioEl.src = set.concatAudio.part1;
     await audioEl.play();
   });
+
   el('btnPlayP2').addEventListener('click', async () => {
-    audioEl.src = getSet().concatAudio.part2;
+    const set = getSet();
+    if(!set.concatAudio || !set.concatAudio.part2){
+      alert('此題組沒有 Part 2 拼接音檔。請改用「播放本題音檔」（語音合成/單題音檔）。');
+      return;
+    }
+    stopSpeech();
+    audioEl.src = set.concatAudio.part2;
     await audioEl.play();
   });
-  el('btnPause').addEventListener('click', () => audioEl.pause());
+
+  el('btnPause').addEventListener('click', () => {
+    audioEl.pause();
+    stopSpeech();
+  });
 
   el('btnPlayQ').addEventListener('click', async () => {
     const set = getSet();
     const q = set.questions[state.currentIndex];
-    if(!q?.audio) return;
-    audioEl.src = q.audio;
-    await audioEl.play();
+    if(!q) return;
+
+    // Prefer real audio file; otherwise use speech synthesis
+    if(q.audio){
+      stopSpeech();
+      audioEl.src = q.audio;
+      await audioEl.play();
+      return;
+    }
+
+    audioEl.pause();
+    const speech = buildSpeechForQuestion(q);
+    if(!speech){
+      alert('本題沒有可播放的音檔/語音內容。');
+      return;
+    }
+    speakEn(speech, { rate: 1 });
   });
 
   el('btnSubmit').addEventListener('click', () => {
@@ -468,8 +990,9 @@ function hookEvents(){
     state.showExplain = false; // 2B
     saveState();
 
-    // stop audio on submit
+    // stop audio/speech on submit
     audioEl.pause();
+    stopSpeech();
 
     location.hash = '#result';
   });
