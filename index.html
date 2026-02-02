@@ -27,6 +27,7 @@
             <option value="set1">Listening Set 1（Part 1: Q1–Q6 / Part 2: Q7–Q16）</option>
             <option value="full_listening">Full Listening 100（Part 1–4：6/25/39/30）</option>
             <option value="full_lr_200">Full TOEIC 200（Listening+Reading：100+100）</option>
+            <option value="full_lr_200_v2">Full TOEIC 200 第二份（進階難度）</option>
           </select>
         </div>
         <div class="row">
@@ -95,6 +96,10 @@
 
           <div class="qTools">
             <button id="btnPlayQ" class="ghost">播放本題音檔</button>
+            <label class="hint small" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin-left:8px">
+              <input type="checkbox" id="chkAutoPlay">
+              連續播放
+            </label>
             <button id="btnAddWord" class="ghost" type="button">記錄不會的單字</button>
             <span id="qAudioHint" class="hint small"></span>
             <span id="unknownCount" class="hint small"></span>

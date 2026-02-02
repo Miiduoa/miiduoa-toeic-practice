@@ -64,6 +64,14 @@ const SETS = {
     assetsBase: null,
     concatAudio: null,
     questions: null // generated on first use
+  },
+  full_lr_200_v2: {
+    id: 'full_lr_200_v2',
+    title: 'Full TOEIC 200 第二份（進階）',
+    durationSecDefault: 120 * 60,
+    assetsBase: null,
+    concatAudio: null,
+    questions: null // generated on first use - different seed, harder
   }
 };
 
@@ -100,7 +108,40 @@ function shuffle(rng, arr){
 function stopSpeech(){
   try{ window.speechSynthesis?.cancel?.(); }catch{}
 }
-function speakEn(text, opts={}){
+
+let cachedEnVoice = null;
+function getEnVoice(){
+  if(cachedEnVoice) return cachedEnVoice;
+  try{
+    const voices = window.speechSynthesis?.getVoices?.() || [];
+    // Prefer high-quality English voices (prefer Google > Samantha > any en-US)
+    const preferred = [
+      'Google US English',
+      'Google UK English Female',
+      'Google UK English Male',
+      'Samantha',
+      'Karen',
+      'Daniel',
+      'Moira',
+      'Fiona',
+    ];
+    for(const name of preferred){
+      const v = voices.find(x => x.name.includes(name) && x.lang.startsWith('en'));
+      if(v){ cachedEnVoice = v; return v; }
+    }
+    // fallback: any en-US or en-GB voice
+    const fallback = voices.find(x => x.lang === 'en-US') || voices.find(x => x.lang.startsWith('en'));
+    if(fallback){ cachedEnVoice = fallback; return fallback; }
+  }catch{}
+  return null;
+}
+// preload voices
+if(typeof window !== 'undefined' && 'speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged = () => { cachedEnVoice = null; getEnVoice(); };
+  getEnVoice();
+}
+
+function speakEn(text, opts={}, onEnd=null){
   if(typeof window === 'undefined') return;
   if(!('speechSynthesis' in window)){
     alert('此瀏覽器不支援語音合成（speechSynthesis）。');
@@ -109,9 +150,14 @@ function speakEn(text, opts={}){
   stopSpeech();
   const u = new SpeechSynthesisUtterance(String(text || ''));
   u.lang = opts.lang || 'en-US';
-  u.rate = typeof opts.rate === 'number' ? opts.rate : 1;
+  u.rate = typeof opts.rate === 'number' ? opts.rate : 0.95;
   u.pitch = typeof opts.pitch === 'number' ? opts.pitch : 1;
   u.volume = typeof opts.volume === 'number' ? opts.volume : 1;
+  const voice = getEnVoice();
+  if(voice) u.voice = voice;
+  if(typeof onEnd === 'function'){
+    u.addEventListener('end', onEnd);
+  }
   window.speechSynthesis.speak(u);
 }
 
@@ -803,9 +849,398 @@ function generateFullReadingQuestions(startId){
   return out;
 }
 
+// --- V2 (第二份試卷): Different seed, harder vocabulary, different questions ---
+function generateFullListeningQuestionsV2(){
+  const rng = makeRng(20260302); // different seed
+  let id = 1;
+  const out = [];
+
+  // Part 1 (6 questions): harder statements
+  const part1_v2 = [
+    {
+      image: './assets/set1/images_png/P1_Q1.svg.png',
+      correct: 'C',
+      statements: [
+        'The participants are concluding their deliberations.',
+        'Several executives are exiting the conference hall.',
+        'Documents are being distributed among the attendees.',
+        'A presentation is being conducted in an auditorium.'
+      ],
+      explain: 'Part 1 V2：正解 C（文件正在分發給與會者）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q2.svg.png',
+      correct: 'A',
+      statements: [
+        'Utensils are being arranged on a dining surface.',
+        'Patrons are perusing the establishment\'s menu.',
+        'Merchandise is being relocated to a storage facility.',
+        'A reservation is being confirmed over the telephone.'
+      ],
+      explain: 'Part 1 V2：正解 A（餐具正在擺放）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q3.svg.png',
+      correct: 'D',
+      statements: [
+        'Pedestrians are congregating near the crosswalk.',
+        'Vehicles are accelerating through an intersection.',
+        'Construction personnel are operating heavy machinery.',
+        'An individual is traversing a designated pathway.'
+      ],
+      explain: 'Part 1 V2：正解 D（有人正在走指定路線）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q4.svg.png',
+      correct: 'B',
+      statements: [
+        'Merchandise has been strategically positioned on shelves.',
+        'A customer is scrutinizing items in a retail establishment.',
+        'A transaction is being finalized at the cash register.',
+        'Store personnel are replenishing inventory from boxes.'
+      ],
+      explain: 'Part 1 V2：正解 B（顧客正在仔細查看商品）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q5.svg.png',
+      correct: 'A',
+      statements: [
+        'Equipment is being systematically installed in the facility.',
+        'Workers are dismantling machinery for maintenance.',
+        'Inventory is being catalogued in a storage warehouse.',
+        'Technicians are calibrating precision instruments.'
+      ],
+      explain: 'Part 1 V2：正解 A（設備正在有系統地安裝）。'
+    },
+    {
+      image: './assets/set1/images_png/P1_Q6.svg.png',
+      correct: 'C',
+      statements: [
+        'A congregation is assembling in a public venue.',
+        'Landscaping work is in progress at the premises.',
+        'Seating has been configured for a forthcoming event.',
+        'Decorations are being affixed to an outdoor structure.'
+      ],
+      explain: 'Part 1 V2：正解 C（座位已為即將舉行的活動配置好）。'
+    },
+  ];
+
+  for(const p of part1_v2){
+    out.push({
+      id: id++,
+      part: 1,
+      image: p.image,
+      statements: p.statements,
+      choices: ['A','B','C','D'],
+      correct: p.correct,
+      explain: p.explain,
+    });
+  }
+
+  // Part 2 (25 questions): harder Q&A with advanced vocabulary
+  const part2_v2_pool = [
+    { prompt: 'Have you ascertained the whereabouts of the quarterly budget analysis?', responses: ['It has been submitted to the finance department.', 'The conference commences at ten o\'clock.', 'Indeed, I prefer espresso.'], correct: 'A', explain: 'V2 Part 2：正解 A（已交財務部門）。' },
+    { prompt: 'When is the procurement deadline for the overseas shipment?', responses: ['Approximately forty-five personnel.', 'By the conclusion of next week.', 'The consignment arrived yesterday.'], correct: 'B', explain: 'V2 Part 2：正解 B（下週結束前）。' },
+    { prompt: 'Would you prefer to conduct the negotiation via teleconference or in person?', responses: ['A face-to-face meeting would be preferable.', 'The agreement was signed previously.', 'The venue accommodates two hundred guests.'], correct: 'A', explain: 'V2 Part 2：正解 A（面對面更好）。' },
+    { prompt: 'Who is responsible for liaising with the regulatory authorities?', responses: ['It has been thoroughly documented.', 'Ms. Rodriguez handles all compliance matters.', 'The amendment will be implemented shortly.'], correct: 'B', explain: 'V2 Part 2：正解 B（Rodriguez 女士負責）。' },
+    { prompt: 'Hasn\'t the infrastructure upgrade been finalized yet?', responses: ['It should be operational by month-end.', 'The specifications were rather comprehensive.', 'Approximately seventeen kilometers.'], correct: 'A', explain: 'V2 Part 2：正解 A（月底應該可運作）。' },
+    { prompt: 'Where can I obtain the requisite documentation for customs clearance?', responses: ['At the trade compliance office on the third floor.', 'The shipment weighs approximately 500 kilograms.', 'It expires next fiscal year.'], correct: 'A', explain: 'V2 Part 2：正解 A（三樓貿易合規辦公室）。' },
+    { prompt: 'Why was the product launch postponed indefinitely?', responses: ['To address unforeseen quality assurance concerns.', 'It requires overnight refrigeration.', 'The brochure contains detailed specifications.'], correct: 'A', explain: 'V2 Part 2：正解 A（處理品質問題）。' },
+    { prompt: 'Could you elaborate on the rationale behind the restructuring proposal?', responses: ['Certainly, I can provide a comprehensive briefing.', 'The premises underwent renovation last quarter.', 'Reservations are mandatory for groups exceeding ten.'], correct: 'A', explain: 'V2 Part 2：正解 A（可以詳細說明）。' },
+  ];
+
+  for(let i=0;i<25;i++){
+    const p = part2_v2_pool[i % part2_v2_pool.length];
+    out.push({
+      id: id++,
+      part: 2,
+      prompt: p.prompt,
+      responses: p.responses,
+      choices: ['A','B','C'],
+      correct: p.correct,
+      explain: p.explain,
+    });
+  }
+
+  // Part 3 (39 questions): 13 conversations × 3 questions
+  const p3_v2_pool = [
+    {
+      passage: 'M: Have you managed to finalize the quarterly projections for the stakeholder presentation?\n' +
+               'W: I\'ve completed the preliminary analysis, but I\'m awaiting confirmation on several procurement expenditures.\n' +
+               'M: Let me liaise with the procurement department to expedite the verification process.',
+      questions: [
+        { text: 'What are the speakers primarily discussing?', correct: 'A financial presentation', wrongs: ['A manufacturing defect', 'An employee orientation', 'A building renovation'], explain: 'V2 Part 3：財務簡報。' },
+        { text: 'What is the woman waiting for?', correct: 'Confirmation of certain expenses', wrongs: ['A delivery of supplies', 'A software installation', 'A training schedule'], explain: 'V2 Part 3：等待費用確認。' },
+        { text: 'What will the man probably do next?', correct: 'Contact another department', wrongs: ['Submit his resignation', 'Book a flight', 'Attend a seminar'], explain: 'V2 Part 3：聯繫其他部門。' },
+      ]
+    },
+    {
+      passage: 'W: The implementation of the new inventory management system has encountered some unforeseen obstacles.\n' +
+               'M: Were the integration specialists able to diagnose the technical discrepancies?\n' +
+               'W: They\'ve identified the root cause and anticipate resolution within seventy-two hours.',
+      questions: [
+        { text: 'What problem is mentioned?', correct: 'Issues with a new system', wrongs: ['A power outage', 'A scheduling conflict', 'A budget shortfall'], explain: 'V2 Part 3：新系統問題。' },
+        { text: 'Who has been working on the problem?', correct: 'Integration specialists', wrongs: ['Marketing analysts', 'Security personnel', 'Accounting staff'], explain: 'V2 Part 3：整合專家。' },
+        { text: 'When is the issue expected to be resolved?', correct: 'Within 72 hours', wrongs: ['Immediately', 'Next month', 'By end of year'], explain: 'V2 Part 3：72小時內。' },
+      ]
+    },
+  ];
+
+  const numPart3Groups = 13;
+  for(let g=0;g<numPart3Groups;g++){
+    const conv = p3_v2_pool[g % p3_v2_pool.length];
+    for(const q of conv.questions){
+      const opts = shuffle(rng, [q.correct, ...q.wrongs]);
+      out.push({
+        id: id++,
+        part: 3,
+        groupId: `V2P3G${g+1}`,
+        passage: conv.passage,
+        questionText: q.text,
+        optionsText: opts,
+        choices: ['A','B','C','D'],
+        correct: ['A','B','C','D'][opts.indexOf(q.correct)],
+        explain: q.explain,
+      });
+    }
+  }
+
+  // Part 4 (30 questions): 10 talks × 3 questions
+  const p4_v2_pool = [
+    {
+      passage: 'Attention all personnel. This is an announcement from the facilities management division. ' +
+               'Due to essential infrastructure maintenance, the east wing elevators will be temporarily inoperative from 9:00 a.m. until approximately 3:00 p.m. tomorrow. ' +
+               'Please utilize the stairwells or the west wing elevators during this period. We apologize for any inconvenience.',
+      questions: [
+        { text: 'What is the purpose of this announcement?', correct: 'To inform about elevator maintenance', wrongs: ['To introduce new staff', 'To announce a promotion', 'To explain a policy change'], explain: 'V2 Part 4：電梯維修通知。' },
+        { text: 'How long will the elevators be out of service?', correct: 'About 6 hours', wrongs: ['All day', '30 minutes', '1 week'], explain: 'V2 Part 4：約6小時（9點到3點）。' },
+        { text: 'What are listeners advised to do?', correct: 'Use alternative elevators or stairs', wrongs: ['Work from home', 'Cancel their meetings', 'Arrive earlier'], explain: 'V2 Part 4：使用樓梯或西翼電梯。' },
+      ]
+    },
+    {
+      passage: 'Good morning, this is your captain speaking. We have reached our cruising altitude of 35,000 feet and anticipate a smooth flight to our destination. ' +
+               'Our estimated arrival time is 3:15 p.m. local time. Flight attendants will commence beverage service shortly. ' +
+               'For your convenience, complimentary Wi-Fi is available for the duration of the flight. Please sit back, relax, and enjoy your journey.',
+      questions: [
+        { text: 'Who is making this announcement?', correct: 'An airline pilot', wrongs: ['A train conductor', 'A hotel receptionist', 'A tour guide'], explain: 'V2 Part 4：機長。' },
+        { text: 'What will happen soon?', correct: 'Drink service will begin', wrongs: ['The plane will land', 'A movie will start', 'Passengers will board'], explain: 'V2 Part 4：飲料服務即將開始。' },
+        { text: 'What is mentioned as complimentary?', correct: 'Wi-Fi access', wrongs: ['Alcoholic beverages', 'Seat upgrades', 'Travel insurance'], explain: 'V2 Part 4：免費Wi-Fi。' },
+      ]
+    },
+  ];
+
+  const numPart4Groups = 10;
+  for(let g=0;g<numPart4Groups;g++){
+    const talk = p4_v2_pool[g % p4_v2_pool.length];
+    for(const q of talk.questions){
+      const opts = shuffle(rng, [q.correct, ...q.wrongs]);
+      out.push({
+        id: id++,
+        part: 4,
+        groupId: `V2P4G${g+1}`,
+        passage: talk.passage,
+        questionText: q.text,
+        optionsText: opts,
+        choices: ['A','B','C','D'],
+        correct: ['A','B','C','D'][opts.indexOf(q.correct)],
+        explain: q.explain,
+      });
+    }
+  }
+
+  return out;
+}
+
+function generateFullReadingQuestionsV2(startId){
+  const rng = makeRng(20260303); // different seed
+  let id = startId;
+  const out = [];
+
+  const mkOptions4 = (correctText, wrongs) => {
+    const all = [correctText, ...wrongs].slice(0, 4);
+    const shuffled = shuffle(rng, all);
+    const correctIdx = shuffled.indexOf(correctText);
+    return { optionsText: shuffled, correctIdx };
+  };
+
+  // Part 5 (30 questions): Harder vocabulary
+  const p5Pool_v2 = [
+    { stem: 'The CEO\'s decision to divest from the subsidiary was considered ____.',  correct: 'prudent', wrongs: ['prudence', 'prudently', 'prude'], explain: 'V2 Part 5：形容詞 prudent（明智的）。' },
+    { stem: 'All personnel are expected to ____ with the new compliance regulations.', correct: 'comply', wrongs: ['compliance', 'compliant', 'complying'], explain: 'V2 Part 5：to + 原形動詞 → comply。' },
+    { stem: 'The acquisition was completed ____ the shareholders\' approval last month.', correct: 'following', wrongs: ['followed', 'follow', 'follows'], explain: 'V2 Part 5：following = 在...之後（介詞）。' },
+    { stem: 'The project timeline is contingent ____ the availability of funding.', correct: 'upon', wrongs: ['at', 'for', 'with'], explain: 'V2 Part 5：contingent upon/on（取決於）。' },
+    { stem: 'Ms. Chen demonstrated ____ expertise during the product development phase.', correct: 'considerable', wrongs: ['consider', 'considerably', 'considering'], explain: 'V2 Part 5：形容詞修飾名詞 → considerable。' },
+    { stem: 'The merger was finalized ____ extensive due diligence procedures.', correct: 'after', wrongs: ['during', 'while', 'before'], explain: 'V2 Part 5：after（在...之後）盡職調查後完成。' },
+    { stem: 'Applicants must possess a ____ understanding of financial modeling.', correct: 'thorough', wrongs: ['thoroughly', 'thoroughness', 'thoroughfare'], explain: 'V2 Part 5：形容詞 thorough 修飾名詞。' },
+    { stem: 'The contract stipulates that deliveries must be made ____.', correct: 'punctually', wrongs: ['punctual', 'punctuality', 'punctuate'], explain: 'V2 Part 5：副詞 punctually 修飾動詞 made。' },
+  ];
+
+  for(let i=0;i<30;i++){
+    const base = p5Pool_v2[i % p5Pool_v2.length];
+    const { optionsText, correctIdx } = mkOptions4(base.correct, base.wrongs);
+    out.push({
+      id: id++,
+      part: 5,
+      choices: ['A','B','C','D'],
+      questionText: base.stem,
+      optionsText,
+      correct: ['A','B','C','D'][correctIdx],
+      explain: base.explain
+    });
+  }
+
+  // Part 6 (16 questions): 4 passages × 4
+  const p6Passages_v2 = [
+    {
+      title: 'Memorandum: Quarterly Performance Review',
+      passage:
+        'MEMORANDUM\n\n' +
+        'To: Department Heads\n' +
+        'From: Chief Operating Officer\n' +
+        'Subject: Q3 Performance Evaluation\n\n' +
+        'As we approach the conclusion of the third quarter, it is (1) ____ that all managers submit comprehensive performance assessments for their respective teams.\n\n' +
+        'These evaluations should be (2) ____ by October 15th to ensure timely processing by Human Resources.\n\n' +
+        'Your cooperation is appreciated.',
+      blanks: [
+        { q: 'Choose the word for blank (1).', correct: 'imperative', wrongs: ['imperatively', 'imperate', 'imperatives'], explain: 'V2 Part 6：(1) 形容詞 imperative（必要的）。' },
+        { q: 'Choose the word for blank (2).', correct: 'submitted', wrongs: ['submission', 'submitting', 'submit'], explain: 'V2 Part 6：(2) 被動語態 be submitted。' },
+        { q: 'What is the main purpose of the memo?', correct: 'To request performance evaluations.', wrongs: ['To announce layoffs.', 'To schedule a retreat.', 'To introduce new software.'], explain: 'V2 Part 6：要求績效評估。' },
+        { q: 'By when should the evaluations be submitted?', correct: 'October 15th.', wrongs: ['End of year', 'Next week', 'November 1st'], explain: 'V2 Part 6：10月15日前。' },
+      ]
+    },
+    {
+      title: 'Notice: Cybersecurity Protocol',
+      passage:
+        'SECURITY NOTICE\n\n' +
+        'Effective immediately, all employees must enable two-factor authentication on their corporate accounts. This measure is designed to (1) ____ the security of our digital infrastructure.\n\n' +
+        'Failure to comply may result in temporary suspension of network (2) ____.\n\n' +
+        'Contact IT Support for assistance.',
+      blanks: [
+        { q: 'Choose the word for blank (1).', correct: 'enhance', wrongs: ['enhancement', 'enhanced', 'enhancing'], explain: 'V2 Part 6：(1) to + 原形 → enhance。' },
+        { q: 'Choose the word for blank (2).', correct: 'privileges', wrongs: ['privilege', 'privileged', 'privileging'], explain: 'V2 Part 6：(2) 名詞複數 privileges。' },
+        { q: 'What must employees do?', correct: 'Enable two-factor authentication.', wrongs: ['Change their passwords weekly.', 'Install personal software.', 'Work from home exclusively.'], explain: 'V2 Part 6：啟用雙因素驗證。' },
+        { q: 'What may happen if employees don\'t comply?', correct: 'Their network access may be suspended.', wrongs: ['They will receive a bonus.', 'They will be promoted.', 'Their vacation days will increase.'], explain: 'V2 Part 6：網路存取權可能被暫停。' },
+      ]
+    },
+  ];
+  while(p6Passages_v2.length < 4) p6Passages_v2.push(p6Passages_v2[p6Passages_v2.length % 2]);
+
+  for(let g=1; g<=4; g++){
+    const p = p6Passages_v2[g-1];
+    for(let i=0;i<4;i++){
+      const b = p.blanks[i];
+      const { optionsText, correctIdx } = mkOptions4(b.correct, b.wrongs);
+      out.push({
+        id: id++,
+        part: 6,
+        groupId: `V2P6G${g}`,
+        passage: p.passage,
+        questionText: b.q,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: b.explain
+      });
+    }
+  }
+
+  // Part 7 (54 questions) - similar structure, harder vocabulary
+  const mkSinglePassage_v2 = (seedTag) => {
+    const company = pick(rng, ['Pinnacle Industries', 'Meridian Consulting', 'Vanguard Technologies', 'Summit Financial']);
+    const day = pick(rng, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    const passage =
+      `Interoffice Correspondence\n\n` +
+      `To: All Departmental Staff\n` +
+      `From: ${company} Administration\n` +
+      `Subject: Amended Reimbursement Procedures\n\n` +
+      `Please be advised that commencing ${day}, all expense reimbursement requests must be accompanied by itemized receipts. ` +
+      `Submissions lacking proper documentation will be returned for revision.\n`;
+
+    const q1 = {
+      questionText: 'What is the primary purpose of this correspondence?',
+      correct: 'To announce changes to a procedure.',
+      wrongs: ['To advertise a new product.', 'To request attendance at an event.', 'To confirm a reservation.'],
+      explain: 'V2 Part 7：公告程序變更。'
+    };
+    const q2 = {
+      questionText: 'What must accompany reimbursement requests?',
+      correct: 'Itemized receipts.',
+      wrongs: ['A supervisor\'s signature only.', 'A credit card statement.', 'A verbal explanation.'],
+      explain: 'V2 Part 7：須附詳細收據。'
+    };
+    const q3 = {
+      questionText: 'What happens to incomplete submissions?',
+      correct: 'They are returned for correction.',
+      wrongs: ['They are approved automatically.', 'They are forwarded to executives.', 'They are destroyed.'],
+      explain: 'V2 Part 7：會被退回修正。'
+    };
+
+    return { passage, questions: [q1,q2,q3] };
+  };
+
+  const p7Groups_v2 = [];
+  for(let i=0;i<9;i++) p7Groups_v2.push({ type:'single', count:3 });
+  p7Groups_v2.push({ type:'single', count:4 });
+  p7Groups_v2.push({ type:'double', count:5 });
+  p7Groups_v2.push({ type:'double', count:5 });
+  p7Groups_v2.push({ type:'triple', count:5 });
+  p7Groups_v2.push({ type:'triple', count:5 });
+  p7Groups_v2.push({ type:'single', count:3 });
+
+  let gIndex = 1;
+  for(const plan of p7Groups_v2){
+    if(plan.type === 'single'){
+      const { passage, questions } = mkSinglePassage_v2(`V2S${gIndex}`);
+      const qs = questions.slice(0, plan.count);
+      while(qs.length < plan.count){
+        qs.push({ questionText: 'What is implied in the correspondence?', correct: 'A policy has been updated.', wrongs: ['A holiday is approaching.', 'A product is discontinued.', 'A store is closing.'], explain: 'V2 Part 7：補齊題。' });
+      }
+      for(const q of qs){
+        const { optionsText, correctIdx } = mkOptions4(q.correct, q.wrongs);
+        out.push({ id: id++, part: 7, groupId: `V2P7G${gIndex}`, passage, questionText: q.questionText, choices: ['A','B','C','D'], optionsText, correct: ['A','B','C','D'][correctIdx], explain: q.explain });
+      }
+      gIndex++;
+      continue;
+    }
+
+    if(plan.type === 'double' || plan.type === 'triple'){
+      const n = plan.type === 'double' ? 2 : 3;
+      const subject = pick(rng, ['merger announcement', 'policy amendment', 'budget allocation', 'personnel restructuring']);
+      const passageParts = [];
+      for(let i=1;i<=n;i++){
+        passageParts.push(`Document ${i}\n\nMemorandum\nSubject: ${subject}\n\nThis document contains pertinent information regarding the aforementioned matter. Please review thoroughly.\n`);
+      }
+      const passage = passageParts.join('\n---\n\n');
+
+      const baseQs = [
+        { questionText: 'What is the subject matter of the documents?', correct: subject, wrongs: ['a recruitment campaign', 'a product recall', 'a facility relocation'], explain: 'V2 Part 7：主旨題。' },
+        { questionText: 'What are readers expected to do?', correct: 'Review the information carefully.', wrongs: ['Discard the documents.', 'Forward to external parties.', 'Ignore the contents.'], explain: 'V2 Part 7：仔細審閱。' },
+        { questionText: 'What type of document is this?', correct: 'An internal memorandum.', wrongs: ['A newspaper article.', 'A product manual.', 'A legal contract.'], explain: 'V2 Part 7：內部備忘錄。' },
+        { questionText: 'Who would most likely receive these documents?', correct: 'Company employees.', wrongs: ['General public.', 'Government officials.', 'University students.'], explain: 'V2 Part 7：公司員工。' },
+        { questionText: 'What is suggested about the information?', correct: 'It is relevant and important.', wrongs: ['It is outdated.', 'It is fictional.', 'It is classified.'], explain: 'V2 Part 7：推論題。' },
+      ];
+
+      for(let i=0;i<plan.count;i++){
+        const q = baseQs[i] || baseQs[0];
+        const { optionsText, correctIdx } = mkOptions4(q.correct, q.wrongs);
+        out.push({ id: id++, part: 7, groupId: `V2P7G${gIndex}`, passage, questionText: q.questionText, choices: ['A','B','C','D'], optionsText, correct: ['A','B','C','D'][correctIdx], explain: q.explain });
+      }
+      gIndex++;
+    }
+  }
+
+  return out;
+}
+
 function generateFullToeic200Questions(){
   const listening = generateFullListeningQuestions();
   const reading = generateFullReadingQuestions(101);
+  return [...listening, ...reading];
+}
+
+function generateFullToeic200QuestionsV2(){
+  const listening = generateFullListeningQuestionsV2();
+  const reading = generateFullReadingQuestionsV2(101);
   return [...listening, ...reading];
 }
 
@@ -817,6 +1252,9 @@ function ensureSetQuestions(set){
   }
   if(set.id === 'full_lr_200'){
     set.questions = generateFullToeic200Questions();
+  }
+  if(set.id === 'full_lr_200_v2'){
+    set.questions = generateFullToeic200QuestionsV2();
   }
 }
 
@@ -1519,7 +1957,28 @@ function hookEvents(){
       alert('本題沒有可播放的音檔/語音內容。');
       return;
     }
-    speakEn(speech, { rate: 1 });
+
+    const autoPlayOn = document.getElementById('chkAutoPlay')?.checked;
+    speakEn(speech, { rate: 0.95 }, () => {
+      // on end callback
+      if(autoPlayOn){
+        const nextIdx = state.currentIndex + 1;
+        const set2 = getSet();
+        if(nextIdx < set2.questions.length){
+          // Check if next question is still listening (part <= 4)
+          const nextQ = set2.questions[nextIdx];
+          if(nextQ && nextQ.part <= 4){
+            state.currentIndex = nextIdx;
+            saveState();
+            renderExamQuestion();
+            // auto-play next after short delay
+            setTimeout(() => {
+              document.getElementById('btnPlayQ')?.click();
+            }, 800);
+          }
+        }
+      }
+    });
   });
 
   el('btnSubmit').addEventListener('click', () => {
