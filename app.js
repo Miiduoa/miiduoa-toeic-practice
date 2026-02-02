@@ -55,6 +55,15 @@ const SETS = {
     assetsBase: null,
     concatAudio: null,
     questions: null, // generated on first use
+  },
+  full_lr_200: {
+    id: 'full_lr_200',
+    title: 'Full TOEIC 200（Listening + Reading）',
+    // TOEIC official test time: Listening 45 min + Reading 75 min = 120 min
+    durationSecDefault: 120 * 60,
+    assetsBase: null,
+    concatAudio: null,
+    questions: null // generated on first use
   }
 };
 
@@ -468,13 +477,349 @@ function generateFullListeningQuestions(){
   return out;
 }
 
+// --- Generated Reading 100 (original questions, aligned with TOEIC official Part 5–7 counts) ---
+function generateFullReadingQuestions(startId){
+  const rng = makeRng(20260203);
+  let id = startId;
+  const out = [];
+
+  const mkOptions4 = (correctText, wrongs) => {
+    const all = [correctText, ...wrongs].slice(0, 4);
+    const shuffled = shuffle(rng, all);
+    const correctIdx = shuffled.indexOf(correctText);
+    return { optionsText: shuffled, correctIdx };
+  };
+
+  // Part 5 (30 questions): Incomplete Sentences
+  const p5Pool = [
+    {
+      stem: 'The report must be ____ by Friday afternoon.',
+      correct: 'completed',
+      wrongs: ['complete', 'completing', 'completes'],
+      explain: 'Part 5：被動語態 must be + p.p. → completed。'
+    },
+    {
+      stem: 'Mr. Lin is responsible ____ training new staff members.',
+      correct: 'for',
+      wrongs: ['to', 'at', 'with'],
+      explain: 'Part 5：be responsible for + V-ing。'
+    },
+    {
+      stem: 'The company will announce the results ____ the end of the month.',
+      correct: 'at',
+      wrongs: ['in', 'on', 'by'],
+      explain: 'Part 5：at the end of...（固定用法）。'
+    },
+    {
+      stem: 'Please submit your expense form as soon as ____.',
+      correct: 'possible',
+      wrongs: ['possibility', 'possibly', 'possess'],
+      explain: 'Part 5：as soon as possible（固定片語）。'
+    },
+    {
+      stem: 'The new policy is intended to improve customer ____.',
+      correct: 'satisfaction',
+      wrongs: ['satisfy', 'satisfied', 'satisfying'],
+      explain: 'Part 5：需要名詞作受詞 → satisfaction。'
+    },
+    {
+      stem: 'If you have any questions, please contact the manager ____.',
+      correct: 'directly',
+      wrongs: ['direct', 'direction', 'directive'],
+      explain: 'Part 5：修飾動詞 contact，用副詞 directly。'
+    },
+    {
+      stem: 'Ms. Ortega will attend the conference ____ she is on vacation.',
+      correct: 'unless',
+      wrongs: ['because', 'so', 'since'],
+      explain: 'Part 5：unless = 除非（條件）。'
+    },
+    {
+      stem: 'The seminar starts at 9 a.m., so please arrive ____ time.',
+      correct: 'on',
+      wrongs: ['in', 'at', 'by'],
+      explain: 'Part 5：on time 準時。'
+    }
+  ];
+
+  for(let i=0;i<30;i++){
+    const base = pick(rng, p5Pool);
+    const { optionsText, correctIdx } = mkOptions4(base.correct, base.wrongs);
+    out.push({
+      id: id++,
+      part: 5,
+      choices: ['A','B','C','D'],
+      questionText: base.stem,
+      optionsText,
+      correct: ['A','B','C','D'][correctIdx],
+      explain: base.explain
+    });
+  }
+
+  // Part 6 (16 questions): Text Completion (4 passages x 4)
+  const p6Passages = [
+    {
+      title: 'Email: Office Supplies',
+      passage:
+        'To: Purchasing Team\n' +
+        'Subject: Office Supplies Request\n\n' +
+        'Hello,\n\n' +
+        'We need to place an order for printer paper and ink cartridges. Please review the attached list and let me know if you have any (1) ____ before Thursday.\n\n' +
+        'Also, the delivery should arrive (2) ____ Monday, because we will be preparing materials for next week\'s training.\n\n' +
+        'Thank you,\n' +
+        'Mina Park',
+      blanks: [
+        {
+          q: 'Choose the word that best completes blank (1).',
+          correct: 'questions',
+          wrongs: ['questioning', 'questioned', 'question'],
+          explain: 'Part 6：(1) any + 名詞複數/不可數 → questions。'
+        },
+        {
+          q: 'Choose the word that best completes blank (2).',
+          correct: 'by',
+          wrongs: ['until', 'during', 'from'],
+          explain: 'Part 6：(2) by + 時間點（不晚於）。'
+        },
+        {
+          q: 'What is the purpose of the email?',
+          correct: 'To request an order of office supplies.',
+          wrongs: ['To cancel a delivery.', 'To schedule a job interview.', 'To report a broken printer.'],
+          explain: 'Part 6：目的題，主旨在訂購文具。'
+        },
+        {
+          q: 'When should the recipient respond?',
+          correct: 'Before Thursday.',
+          wrongs: ['On Monday', 'After the training', 'Next month'],
+          explain: 'Part 6：細節題，before Thursday。'
+        }
+      ]
+    },
+    {
+      title: 'Notice: Building Maintenance',
+      passage:
+        'NOTICE\n\n' +
+        'The building\'s air-conditioning system will be inspected this Saturday. During the inspection, the temperature in some areas may (1) ____ slightly.\n\n' +
+        'Employees are advised to keep their windows closed and to avoid using personal heaters, (2) ____ they may affect the inspection.\n\n' +
+        'We apologize for any inconvenience.\n' +
+        'Facilities Office',
+      blanks: [
+        {
+          q: 'Choose the word that best completes blank (1).',
+          correct: 'change',
+          wrongs: ['changes', 'changing', 'changed'],
+          explain: 'Part 6：may + 原形動詞 → change。'
+        },
+        {
+          q: 'Choose the word that best completes blank (2).',
+          correct: 'because',
+          wrongs: ['although', 'unless', 'after'],
+          explain: 'Part 6：because 表原因。'
+        },
+        {
+          q: 'What will happen on Saturday?',
+          correct: 'The air-conditioning system will be inspected.',
+          wrongs: ['The office will move to a new building.', 'A fire drill will be conducted.', 'The cafeteria will be renovated.'],
+          explain: 'Part 6：細節題，air-conditioning inspection。'
+        },
+        {
+          q: 'What are employees advised to do?',
+          correct: 'Keep windows closed.',
+          wrongs: ['Work from home', 'Bring extra fans', 'Turn off all lights'],
+          explain: 'Part 6：建議事項題，keep windows closed。'
+        }
+      ]
+    }
+  ];
+
+  // ensure exactly 4 passages
+  while(p6Passages.length < 4) p6Passages.push(p6Passages[p6Passages.length % 2]);
+
+  for(let g=1; g<=4; g++){
+    const p = p6Passages[g-1];
+    for(let i=0;i<4;i++){
+      const b = p.blanks[i];
+      const { optionsText, correctIdx } = mkOptions4(b.correct, b.wrongs);
+      out.push({
+        id: id++,
+        part: 6,
+        groupId: `P6G${g}`,
+        passage: p.passage,
+        questionText: b.q,
+        choices: ['A','B','C','D'],
+        optionsText,
+        correct: ['A','B','C','D'][correctIdx],
+        explain: b.explain
+      });
+    }
+  }
+
+  // Part 7 (54 questions): Reading Comprehension (single/double/triple passages)
+  const mkSinglePassage = (seedTag) => {
+    const company = pick(rng, ['Northwind Electronics', 'Blue Harbor Travel', 'GreenLeaf Cafe', 'Apex Logistics']);
+    const day = pick(rng, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    const passage =
+      `Email\n\n` +
+      `To: Staff\n` +
+      `From: ${company} HR\n` +
+      `Subject: Policy Reminder\n\n` +
+      `This is a reminder that all employees must submit their weekly timesheets by 5:00 p.m. on ${day}. ` +
+      `Timesheets submitted after the deadline may be processed the following week.\n`;
+
+    const q1 = {
+      questionText: 'What is the main purpose of the email?',
+      correct: 'To remind employees about a deadline.',
+      wrongs: ['To announce a new product.', 'To invite customers to an event.', 'To explain a shipping delay.'],
+      explain: 'Part 7：主旨題，提醒 timesheet 截止時間。'
+    };
+    const q2 = {
+      questionText: `By what time should timesheets be submitted on ${day}?`,
+      correct: 'By 5:00 p.m.',
+      wrongs: ['By 9:00 a.m.', 'By noon', 'By midnight'],
+      explain: 'Part 7：細節題，by 5:00 p.m.。'
+    };
+    const q3 = {
+      questionText: 'What may happen if a timesheet is submitted late?',
+      correct: 'It may be processed the following week.',
+      wrongs: ['It will be rejected permanently.', 'A meeting will be scheduled.', 'An invoice will be sent.'],
+      explain: 'Part 7：推論題，文中說 may be processed the following week。'
+    };
+
+    return { passage, questions: [q1,q2,q3] };
+  };
+
+  // Build group plan to total 54
+  const p7Groups = [];
+  // 10 single passages: 9x3 + 1x4 = 31
+  for(let i=0;i<9;i++) p7Groups.push({ type:'single', count:3 });
+  p7Groups.push({ type:'single', count:4 });
+  // 2 double passages: 5 each = 10
+  p7Groups.push({ type:'double', count:5 });
+  p7Groups.push({ type:'double', count:5 });
+  // 2 triple passages: 5 each = 10
+  p7Groups.push({ type:'triple', count:5 });
+  p7Groups.push({ type:'triple', count:5 });
+  // total = 31 + 10 + 10 = 51, add 3 more single = 54
+  p7Groups.push({ type:'single', count:3 });
+
+  let gIndex = 1;
+  for(const plan of p7Groups){
+    if(plan.type === 'single'){
+      const { passage, questions } = mkSinglePassage(`S${gIndex}`);
+      const qs = questions.slice(0, plan.count);
+      while(qs.length < plan.count){
+        qs.push({
+          questionText: 'What is mentioned in the email?',
+          correct: 'A weekly deadline.',
+          wrongs: ['A hotel address.', 'A price discount.', 'A flight number.'],
+          explain: 'Part 7：細節題（補齊）。'
+        });
+      }
+      for(const q of qs){
+        const { optionsText, correctIdx } = mkOptions4(q.correct, q.wrongs);
+        out.push({
+          id: id++,
+          part: 7,
+          groupId: `P7G${gIndex}`,
+          passage,
+          questionText: q.questionText,
+          choices: ['A','B','C','D'],
+          optionsText,
+          correct: ['A','B','C','D'][correctIdx],
+          explain: q.explain
+        });
+      }
+      gIndex++;
+      continue;
+    }
+
+    if(plan.type === 'double' || plan.type === 'triple'){
+      const n = plan.type === 'double' ? 2 : 3;
+      const subject = pick(rng, ['training session', 'product order', 'travel schedule', 'maintenance work']);
+      const passageParts = [];
+      for(let i=1;i<=n;i++){
+        passageParts.push(
+          `Passage ${i}\n` +
+          `Memo\n` +
+          `Subject: ${subject}\n\n` +
+          `Please review the details in this memo. It includes dates, locations, and contact information.\n`
+        );
+      }
+      const passage = passageParts.join('\n---\n\n');
+
+      const baseQs = [
+        {
+          questionText: 'What is the topic of the documents?',
+          correct: subject,
+          wrongs: ['a new hiring policy', 'a restaurant menu', 'a parking ticket'],
+          explain: 'Part 7：主旨題（多篇文章）。'
+        },
+        {
+          questionText: 'What are readers asked to do?',
+          correct: 'Review the details.',
+          wrongs: ['Return an item', 'Apply for a position', 'Cancel a reservation'],
+          explain: 'Part 7：細節題，review the details。'
+        },
+        {
+          questionText: 'What information is included?',
+          correct: 'Dates and locations.',
+          wrongs: ['Weather forecasts', 'Medical advice', 'Sports scores'],
+          explain: 'Part 7：細節題，dates/locations/contact。'
+        },
+        {
+          questionText: 'Who would most likely read these documents?',
+          correct: 'Employees participating in the activity.',
+          wrongs: ['Passengers waiting at a gate', 'Patients at a clinic', 'Children at a school'],
+          explain: 'Part 7：推論題。'
+        },
+        {
+          questionText: 'What is indicated about the contact information?',
+          correct: 'It is provided for questions.',
+          wrongs: ['It is missing', 'It is outdated', 'It is confidential'],
+          explain: 'Part 7：推論題（補齊）。'
+        }
+      ];
+
+      for(let i=0;i<plan.count;i++){
+        const q = baseQs[i] || baseQs[0];
+        const { optionsText, correctIdx } = mkOptions4(q.correct, q.wrongs);
+        out.push({
+          id: id++,
+          part: 7,
+          groupId: `P7G${gIndex}`,
+          passage,
+          questionText: q.questionText,
+          choices: ['A','B','C','D'],
+          optionsText,
+          correct: ['A','B','C','D'][correctIdx],
+          explain: q.explain
+        });
+      }
+      gIndex++;
+    }
+  }
+
+  return out;
+}
+
+function generateFullToeic200Questions(){
+  const listening = generateFullListeningQuestions();
+  const reading = generateFullReadingQuestions(101);
+  return [...listening, ...reading];
+}
+
 function ensureSetQuestions(set){
   if(!set) return;
   if(Array.isArray(set.questions) && set.questions.length > 0) return;
   if(set.id === 'full_listening'){
     set.questions = generateFullListeningQuestions();
   }
+  if(set.id === 'full_lr_200'){
+    set.questions = generateFullToeic200Questions();
+  }
 }
+
+// (removed duplicate legacy ensureSetQuestions block)
 
 const el = (id) => document.getElementById(id);
 
@@ -722,6 +1067,41 @@ function renderExamQuestion(){
       media.appendChild(btn);
       media.appendChild(pre);
     }
+  } else if(q.part >= 5){
+    const box = document.createElement('div');
+    box.className = 'hint';
+    box.textContent = 'Reading（Part 5–7）：請閱讀題目/文章後作答（無音檔）';
+    media.appendChild(box);
+
+    if(q.passage){
+      const btn = document.createElement('button');
+      btn.className = 'ghost';
+      btn.type = 'button';
+      btn.textContent = '顯示/隱藏文章';
+      btn.style.marginTop = '12px';
+
+      const pre = document.createElement('pre');
+      pre.className = 'hint small';
+      pre.style.whiteSpace = 'pre-wrap';
+      pre.style.marginTop = '10px';
+      pre.style.display = 'block';
+      pre.textContent = q.passage;
+
+      btn.addEventListener('click', () => {
+        pre.style.display = pre.style.display === 'none' ? 'block' : 'none';
+      });
+
+      media.appendChild(btn);
+      media.appendChild(pre);
+    }
+
+    if(q.questionText){
+      const qt = document.createElement('div');
+      qt.style.marginTop = '10px';
+      qt.style.fontWeight = '800';
+      qt.textContent = q.questionText;
+      media.appendChild(qt);
+    }
   } else {
     const box = document.createElement('div');
     box.className = 'hint';
@@ -731,11 +1111,13 @@ function renderExamQuestion(){
 
   // per-question audio hint
   const speech = buildSpeechForQuestion(q);
-  el('qAudioHint').textContent = q.audio
-    ? `音檔：${q.audio.split('/').slice(-1)[0]}`
-    : speech
-      ? '語音合成：可播放（非官方音檔）'
-      : '';
+  el('qAudioHint').textContent = q.part >= 5
+    ? 'Reading：無音檔'
+    : q.audio
+      ? `音檔：${q.audio.split('/').slice(-1)[0]}`
+      : speech
+        ? '語音合成：可播放（非官方音檔）'
+        : '';
 
   // choices
   const choicesWrap = el('choices');
