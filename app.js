@@ -845,6 +845,7 @@ let state = {
   currentIndex: 0,
   answers: {},
   showExplain: false,
+  unknownWords: [],
 };
 
 function loadState(){
@@ -859,6 +860,7 @@ function loadState(){
       if(typeof state.durationSec !== 'number' || !isFinite(state.durationSec)) state.durationSec = SETS[state.setId].durationSecDefault;
       if(typeof state.currentIndex !== 'number') state.currentIndex = 0;
       if(!state.answers || typeof state.answers !== 'object') state.answers = {};
+      if(!Array.isArray(state.unknownWords)) state.unknownWords = [];
     }
   }catch{}
 }
@@ -909,6 +911,7 @@ function clearState(){
     currentIndex: 0,
     answers: {},
     showExplain: false,
+    unknownWords: [],
   };
 }
 
@@ -1003,6 +1006,63 @@ function computeScore(){
     return { qid: q.id, part: q.part, user, correct: q.correct, ok };
   });
   return { correctCount, total: set.questions.length, rows };
+}
+
+// --- Unknown words (vocab notebook) ---
+function normalizeWordInput(s){
+  return String(s || '').replace(/\s+/g,' ').trim();
+}
+
+function findSelectedText(){
+  try{
+    const sel = window.getSelection && window.getSelection();
+    const t = sel ? sel.toString() : '';
+    return normalizeWordInput(t);
+  }catch{
+    return '';
+  }
+}
+
+function addUnknownWord(word, note, q){
+  const w = normalizeWordInput(word);
+  if(!w) return;
+  const key = w.toLowerCase();
+
+  const list = Array.isArray(state.unknownWords) ? state.unknownWords : [];
+  const exists = list.some((x) => String(x.word || '').toLowerCase() === key);
+  if(exists) return;
+
+  const item = {
+    id: Date.now(),
+    word: w,
+    note: normalizeWordInput(note),
+    qid: q?.id ?? null,
+    part: q?.part ?? null,
+    createdAt: new Date().toISOString()
+  };
+
+  state.unknownWords = [item, ...list];
+  saveState();
+  updateUnknownCountUI();
+}
+
+function removeUnknownWord(id){
+  const list = Array.isArray(state.unknownWords) ? state.unknownWords : [];
+  state.unknownWords = list.filter((x) => x.id !== id);
+  saveState();
+  updateUnknownCountUI();
+}
+
+function clearUnknownWords(){
+  state.unknownWords = [];
+  saveState();
+  updateUnknownCountUI();
+}
+
+function updateUnknownCountUI(){
+  const n = Array.isArray(state.unknownWords) ? state.unknownWords.length : 0;
+  const elc = document.getElementById('unknownCount');
+  if(elc) elc.textContent = n ? `已記錄單字：${n}` : '';
 }
 
 function renderHome(){
@@ -1150,6 +1210,7 @@ function renderExamQuestion(){
       : speech
         ? '語音合成：可播放（非官方音檔）'
         : '';
+  updateUnknownCountUI();
 
   // choices
   const choicesWrap = el('choices');
@@ -1232,6 +1293,45 @@ function renderResult(){
     list.appendChild(div);
   });
 
+  // unknown words (vocab)
+  const vocabCard = el('vocabCard');
+  const vocabList = el('vocabList');
+  const words = Array.isArray(state.unknownWords) ? state.unknownWords : [];
+  if(vocabCard && vocabList){
+    vocabCard.classList.toggle('hidden', words.length === 0);
+    vocabList.innerHTML = '';
+
+    words.forEach((w) => {
+      const row = document.createElement('div');
+      row.className = 'vocabItem';
+
+      const left = document.createElement('div');
+      const meta = [];
+      if(w.part) meta.push(`Part ${w.part}`);
+      if(w.qid) meta.push(`Q${w.qid}`);
+      left.innerHTML = `
+        <div class="vocabWord">${escapeHtml(w.word || '')}</div>
+        <div class="vocabMeta">${escapeHtml(meta.join(' · ') || '')}</div>
+        <div class="vocabNote">${escapeHtml(w.note || '')}</div>
+      `;
+
+      const right = document.createElement('div');
+      const btn = document.createElement('button');
+      btn.className = 'ghost';
+      btn.type = 'button';
+      btn.textContent = '刪除';
+      btn.addEventListener('click', () => {
+        removeUnknownWord(w.id);
+        renderResult();
+      });
+      right.appendChild(btn);
+
+      row.appendChild(left);
+      row.appendChild(right);
+      vocabList.appendChild(row);
+    });
+  }
+
   // explanations
   const explainCard = el('explainCard');
   explainCard.classList.toggle('hidden', !state.showExplain);
@@ -1290,6 +1390,33 @@ function hookEvents(){
     themeBtn.addEventListener('click', () => toggleTheme());
   }
 
+  const addWordBtn = document.getElementById('btnAddWord');
+  if(addWordBtn){
+    addWordBtn.addEventListener('click', () => {
+      const set = getSet();
+      const q = set.questions[state.currentIndex];
+
+      const picked = findSelectedText();
+      const word = picked || window.prompt('輸入要記錄的不會單字（可先框選文字再按按鈕）', '') || '';
+      const w = normalizeWordInput(word);
+      if(!w) return;
+
+      const note = window.prompt('備註/中文意思（可留空）', '') || '';
+      addUnknownWord(w, note, q);
+      // small feedback
+      updateUnknownCountUI();
+    });
+  }
+
+  const clearVocabBtn = document.getElementById('btnClearVocab');
+  if(clearVocabBtn){
+    clearVocabBtn.addEventListener('click', () => {
+      if(!confirm('確定要清空所有已記錄的單字嗎？')) return;
+      clearUnknownWords();
+      renderResult();
+    });
+  }
+
   // home
   el('setSelect').addEventListener('change', () => {
     const setId = el('setSelect').value;
@@ -1316,6 +1443,7 @@ function hookEvents(){
     state.currentIndex = 0;
     state.answers = {};
     state.showExplain = false;
+    state.unknownWords = [];
 
     saveState();
     location.hash = '#exam';

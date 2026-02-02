@@ -196,6 +196,19 @@ button.ghost{background:transparent}
 .resultActions{display:flex; gap:10px}
 
 .resultList{display:grid; gap:8px}
+
+.vocabList{display:grid; gap:10px; margin-top:12px}
+.vocabItem{
+  display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  padding:12px;
+  border-radius: 14px;
+  border:1px solid var(--border);
+  background: color-mix(in oklab, var(--panel2) 65%, transparent);
+}
+.vocabWord{font-weight:950; letter-spacing:.2px}
+.vocabMeta{color:var(--muted); font-size:12px; margin-top:2px}
+.vocabNote{color:var(--muted); font-size:13px; line-height:1.5; white-space:pre-line}
+
 .resultRow{
   display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
   padding:10px 12px;

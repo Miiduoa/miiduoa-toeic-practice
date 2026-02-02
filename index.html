@@ -95,7 +95,9 @@
 
           <div class="qTools">
             <button id="btnPlayQ" class="ghost">播放本題音檔</button>
+            <button id="btnAddWord" class="ghost" type="button">記錄不會的單字</button>
             <span id="qAudioHint" class="hint small"></span>
+            <span id="unknownCount" class="hint small"></span>
           </div>
 
           <div id="choices" class="choices"></div>
@@ -121,6 +123,19 @@
       <div class="card">
         <h2>題目明細</h2>
         <div id="resultList" class="resultList"></div>
+      </div>
+
+      <div id="vocabCard" class="card hidden">
+        <div class="resultTop">
+          <div>
+            <h2 style="margin:0">不會的單字</h2>
+            <div class="hint">你在考試中記錄的單字會出現在這裡（保存在本機瀏覽器）。</div>
+          </div>
+          <div class="resultActions">
+            <button id="btnClearVocab" class="ghost" type="button">清空單字</button>
+          </div>
+        </div>
+        <div id="vocabList" class="vocabList"></div>
       </div>
 
       <div id="explainCard" class="card hidden">
