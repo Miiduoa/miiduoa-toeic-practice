@@ -68,6 +68,7 @@ const SETS = {
 };
 
 const LS_KEY = 'toeic_mvp_state_v1';
+const THEME_KEY = 'toeic_mvp_theme_v1';
 
 // --- Utilities: deterministic RNG (for generated sets) ---
 function makeRng(seed){
@@ -862,6 +863,37 @@ function loadState(){
   }catch{}
 }
 
+function applyTheme(theme){
+  try{
+    const t = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = t === 'dark' ? 'dark' : '';
+  }catch{}
+}
+
+function initTheme(){
+  let saved = 'light';
+  try{
+    saved = localStorage.getItem(THEME_KEY) || 'light';
+  }catch{}
+  const theme = saved === 'dark' ? 'dark' : 'light';
+  applyTheme(theme);
+  const btn = document.getElementById('btnTheme');
+  if(btn){
+    btn.textContent = theme === 'dark' ? '淺色' : '深色';
+  }
+}
+
+function toggleTheme(){
+  const cur = (document.documentElement.dataset.theme === 'dark') ? 'dark' : 'light';
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try{ localStorage.setItem(THEME_KEY, next); }catch{}
+  const btn = document.getElementById('btnTheme');
+  if(btn){
+    btn.textContent = next === 'dark' ? '淺色' : '深色';
+  }
+}
+
 function saveState(){
   localStorage.setItem(LS_KEY, JSON.stringify(state));
 }
@@ -1252,6 +1284,12 @@ function render(){
 }
 
 function hookEvents(){
+  // theme toggle
+  const themeBtn = document.getElementById('btnTheme');
+  if(themeBtn){
+    themeBtn.addEventListener('click', () => toggleTheme());
+  }
+
   // home
   el('setSelect').addEventListener('change', () => {
     const setId = el('setSelect').value;
@@ -1395,6 +1433,7 @@ function hookEvents(){
 }
 
 (function init(){
+  initTheme();
   loadState();
 
   // if user had started but not submitted, keep them in exam if hash asks so

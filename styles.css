@@ -1,4 +1,27 @@
+/*
+  UI refresh (light-first) for TOEIC practice MVP.
+  - Default: light theme (clean, TOEIC-like)
+  - Optional: dark theme via :root[data-theme="dark"]
+*/
+
 :root{
+  --bg:#f6f7fb;
+  --panel:#ffffff;
+  --panel2:#f1f5f9;
+  --text:#0f172a;
+  --muted:#475569;
+  --border:#e2e8f0;
+  --accent:#2563eb;
+  --accent2:#1d4ed8;
+  --danger:#dc2626;
+  --ok:#059669;
+  --warn:#b45309;
+  --shadow: 0 10px 30px rgba(2,6,23,0.06);
+  --shadow2: 0 6px 16px rgba(2,6,23,0.08);
+  --radius: 14px;
+}
+
+:root[data-theme="dark"]{
   --bg:#0b1020;
   --panel:#111936;
   --panel2:#0f1730;
@@ -6,137 +29,188 @@
   --muted:#a9b3d6;
   --border:#253055;
   --accent:#6ea8fe;
+  --accent2:#3b82f6;
   --danger:#ff5c6c;
   --ok:#5eead4;
   --warn:#fbbf24;
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  --shadow2: 0 6px 16px rgba(0,0,0,0.35);
 }
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  background:linear-gradient(180deg, var(--bg), #070b16);
-  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: var(--bg);
+  color: var(--text);
 }
 
+/* Top bar */
 .topbar{
   position:sticky; top:0; z-index:10;
   display:flex; align-items:center; justify-content:space-between;
   padding:14px 18px;
-  background:rgba(10,16,35,.9);
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
   border-bottom:1px solid var(--border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
 }
-.brand{font-weight:700; letter-spacing:.3px}
-.topnav a{color:var(--muted); text-decoration:none; margin-left:12px; padding:6px 10px; border-radius:8px; border:1px solid transparent}
-.topnav a:hover{border-color:var(--border); color:var(--text)}
+.brand{font-weight:800; letter-spacing:.2px}
+.topnav{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.topnav a{
+  color: var(--muted);
+  text-decoration:none;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid transparent;
+}
+.topnav a:hover{border-color:var(--border); color:var(--text); background: color-mix(in oklab, var(--panel2) 70%, transparent)}
 .topnav a.disabled{opacity:.45; pointer-events:none}
 
+/* Layout */
 .container{max-width:1100px; margin:0 auto; padding:22px 16px 40px}
 .view.hidden{display:none}
 
-h1{margin:10px 0 14px; font-size:24px}
+h1{margin:10px 0 14px; font-size:28px; letter-spacing:-.01em}
 h2{margin:0 0 10px; font-size:18px}
 
 .card{
-  background:rgba(17,25,54,.85);
+  background: var(--panel);
   border:1px solid var(--border);
-  border-radius:14px;
-  padding:14px;
+  border-radius: var(--radius);
+  padding:16px;
   margin:12px 0;
+  box-shadow: var(--shadow);
 }
-.row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0}
-.label{min-width:120px; color:var(--muted)}
-.hint{color:var(--muted); font-size:13px; line-height:1.45}
+
+.row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:12px 0}
+.label{min-width:140px; color:var(--muted); font-weight:600}
+.hint{color:var(--muted); font-size:13px; line-height:1.55}
 .hint.small{font-size:12px}
 
 input,select{
-  background:var(--panel2);
+  background: var(--panel2);
   border:1px solid var(--border);
   color:var(--text);
   padding:10px 12px;
-  border-radius:10px;
+  border-radius: 12px;
+  outline:none;
 }
+input:focus,select:focus{border-color: color-mix(in oklab, var(--accent) 75%, var(--border)); box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 16%, transparent)}
 
 button{
   border:1px solid var(--border);
-  background:var(--panel2);
-  color:var(--text);
+  background: var(--panel2);
+  color: var(--text);
   padding:10px 12px;
-  border-radius:10px;
+  border-radius: 12px;
   cursor:pointer;
+  font-weight:700;
 }
-button:hover{border-color:#3a4a7d}
-button.primary{background:rgba(110,168,254,.15); border-color:rgba(110,168,254,.6)}
-button.danger{background:rgba(255,92,108,.12); border-color:rgba(255,92,108,.65)}
+button:hover{border-color: color-mix(in oklab, var(--accent) 40%, var(--border)); box-shadow: var(--shadow2)}
+button.primary{background: var(--accent); border-color: color-mix(in oklab, var(--accent) 70%, var(--border)); color:white}
+button.primary:hover{background: var(--accent2)}
+button.danger{background: color-mix(in oklab, var(--danger) 12%, var(--panel)); border-color: color-mix(in oklab, var(--danger) 55%, var(--border)); color: var(--danger)}
+button.danger:hover{background: color-mix(in oklab, var(--danger) 18%, var(--panel))}
 button.ghost{background:transparent}
 
+/* Exam header */
 .examHeader{
   display:grid;
-  grid-template-columns: 220px 1fr 160px;
+  grid-template-columns: 220px 1fr 180px;
   gap:12px;
   align-items:start;
 }
-.timerBox,.audioBox,.actionsBox{background:rgba(15,23,48,.75); border:1px solid var(--border); border-radius:14px; padding:12px}
-.timer{font-size:34px; font-weight:800; letter-spacing:.6px; margin-top:6px}
-.timerLabel{color:var(--muted); font-size:12px}
-.overtime{margin-top:8px; color:var(--warn); font-weight:700}
+.timerBox,.audioBox,.actionsBox{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding:14px;
+  box-shadow: var(--shadow);
+}
+.timer{font-size:34px; font-weight:900; letter-spacing:.6px; margin-top:6px}
+.timerLabel{color:var(--muted); font-size:12px; font-weight:700}
+.overtime{margin-top:8px; color:var(--warn); font-weight:900}
 
-.audioTitle{font-weight:700; margin-bottom:6px}
+.audioTitle{font-weight:800; margin-bottom:6px}
 .audioControls{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px}
 #audio{width:100%}
 
-.examBody{display:grid; grid-template-columns: 220px 1fr; gap:12px; margin-top:12px}
-.navPanel{background:rgba(15,23,48,.75); border:1px solid var(--border); border-radius:14px; padding:12px; height:fit-content}
-.navTitle{font-weight:700; margin-bottom:10px}
+.examBody{display:grid; grid-template-columns: 240px 1fr; gap:12px; margin-top:12px}
+.navPanel{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding:14px;
+  height:fit-content;
+  box-shadow: var(--shadow);
+}
+.navTitle{font-weight:800; margin-bottom:10px}
 .qGrid{display:grid; grid-template-columns: repeat(4, 1fr); gap:8px}
-.qBtn{padding:10px 0; text-align:center; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text)}
-.qBtn.current{outline:2px solid rgba(110,168,254,.7)}
-.qBtn.answered{border-color:rgba(94,234,212,.6)}
+.qBtn{
+  padding:10px 0;
+  text-align:center;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background: color-mix(in oklab, var(--panel2) 85%, transparent);
+  color:var(--text);
+  font-weight:800;
+}
+.qBtn:hover{border-color: color-mix(in oklab, var(--accent) 35%, var(--border))}
+.qBtn.current{outline:3px solid color-mix(in oklab, var(--accent) 40%, transparent)}
+.qBtn.answered{border-color: color-mix(in oklab, var(--ok) 45%, var(--border)); background: color-mix(in oklab, var(--ok) 10%, var(--panel2))}
 .navBottom{display:flex; gap:8px; margin-top:12px}
 
-.questionPanel{background:rgba(15,23,48,.75); border:1px solid var(--border); border-radius:14px; padding:12px}
+.questionPanel{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: var(--radius);
+  padding:14px;
+  box-shadow: var(--shadow);
+}
 .qMeta{display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap}
-.qTitle{font-size:20px; font-weight:800}
-.qPart{color:var(--muted)}
+.qTitle{font-size:20px; font-weight:900}
+.qPart{color:var(--muted); font-weight:700}
 
 .qMedia{margin:12px 0}
-.qMedia img{max-width:100%; border-radius:12px; border:1px solid var(--border); background:#0a0f22}
+.qMedia img{max-width:100%; border-radius:12px; border:1px solid var(--border); background: color-mix(in oklab, var(--panel2) 85%, transparent)}
 
 .qTools{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
 
 .choices{display:grid; gap:10px}
 .choice{
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:flex-start; gap:10px;
   padding:12px;
-  border-radius:12px;
+  border-radius: 14px;
   border:1px solid var(--border);
-  background:rgba(17,25,54,.35);
+  background: color-mix(in oklab, var(--panel2) 75%, transparent);
+  transition: transform .08s ease, border-color .15s ease;
 }
-.choice:hover{border-color:#3a4a7d}
-.choice input{transform:scale(1.15)}
-.choiceLabel{font-weight:800; min-width:26px}
+.choice:hover{border-color: color-mix(in oklab, var(--accent) 30%, var(--border)); transform: translateY(-1px)}
+.choice input{transform:scale(1.15); margin-top:2px}
+.choiceLabel{font-weight:900; min-width:26px}
 
+/* Results */
 .resultTop{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center}
-.resultScore{font-size:34px; font-weight:900}
+.resultScore{font-size:34px; font-weight:950}
 .resultActions{display:flex; gap:10px}
 
 .resultList{display:grid; gap:8px}
 .resultRow{
   display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
   padding:10px 12px;
-  border-radius:12px;
+  border-radius: 14px;
   border:1px solid var(--border);
-  background:rgba(17,25,54,.35);
+  background: color-mix(in oklab, var(--panel2) 65%, transparent);
 }
-.badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); color:var(--muted)}
-.badge.ok{border-color:rgba(94,234,212,.6); color:var(--ok)}
-.badge.bad{border-color:rgba(255,92,108,.6); color:var(--danger)}
+.badge{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); color:var(--muted); font-weight:700}
+.badge.ok{border-color: color-mix(in oklab, var(--ok) 45%, var(--border)); color: var(--ok)}
+.badge.bad{border-color: color-mix(in oklab, var(--danger) 50%, var(--border)); color: var(--danger)}
 
 .explainList{display:grid; gap:10px}
-.explainItem{padding:12px; border-radius:12px; border:1px solid var(--border); background:rgba(17,25,54,.25)}
+.explainItem{padding:12px; border-radius: 14px; border:1px solid var(--border); background: color-mix(in oklab, var(--panel2) 55%, transparent)}
 .explainItem h3{margin:0 0 6px; font-size:15px}
-.explainItem .muted{color:var(--muted); font-size:13px; line-height:1.5}
+.explainItem .muted{color:var(--muted); font-size:13px; line-height:1.6}
 
 .footer{padding:18px 16px; border-top:1px solid var(--border); text-align:center; color:var(--muted)}
 
